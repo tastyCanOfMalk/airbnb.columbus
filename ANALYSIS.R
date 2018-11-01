@@ -5,19 +5,21 @@ if (!require("lubridate")) install.packages("lubridate")
 if (!require("stargazer")) install.packages("stargazer")
 if (!require("dplyr")) install.packages("dplyr")
 if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("MASS")) install.packages("MASS")
 library(tidyverse)
 library(tibble)
 library(lubridate)
 library(stargazer)
 library(dplyr)
 library(ggplot2)
+library(MASS)
 
 # setwd("/home/e/R/airbnb.columbus/")
 setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
 x <- read.csv("data/listings_full.csv")
 
-x.1 <- x %>% 
+x <- x %>% 
   mutate(days.as.host = as.integer(today()-ymd(x$host_since))) %>% 
   mutate(host_is_superhost = as.integer(ifelse(host_is_superhost == "t", 1,0))) %>% 
   mutate(location_is_Near.North_University = ifelse(neighbourhood_cleansed == "Near North/University",1,0)) %>%  
@@ -69,48 +71,32 @@ x.1 <- x %>%
   mutate(cancellation_is_strict_14 = as.integer(ifelse(cancellation_policy == "strict_14_with_grace_period",1,0))) %>% 
   mutate(cancellation_is_super_strict_30 = as.integer(ifelse(cancellation_policy == "super_strict_30",1,0))) %>% 
   mutate(cancellation_is_super_strict_60 = as.integer(ifelse(cancellation_policy == "super_strict_60",1,0)))
-# glimpse(x.1)  
-  
-# x.2 <- x.1 %>% 
-#   select(days.as.host, host_is_superhost, host_total_listings_count,
-#          location_is_Near.North_University, location_is_Near.East, location_is_Clintonville, location_is_Near.South,
-#          location_is_West.Olentangy, location_is_North.Linden, location_is_Eastland_Brice, location_is_South.Linden,
-#          location_is_Rocky.Fork_Blacklick, location_is_Downtown, location_is_West.Scioto, location_is_Northeast,
-#          location_is_Hilltop, location_is_Far.West, location_is_Eastmoor_Walnut.Ridge, location_is_Southeast,
-#          location_is_Northland, location_is_Northwest, location_is_Far.Northwest, location_is_Far.East, location_is_Westland,
-#          location_is_Hayden.Run, location_is_Franklinton, location_is_Far.North, location_is_Rickenbacker, location_is_Far.South,
-#          location_is_Greenlawn_Frank.Road, room_is_Entire.home, room_is_Private.room, room_is_Shared.room,
-#          accommodates, bathrooms, bedrooms, beds, 
-#          Price, weekly_Price, monthly_Price, security_Deposit, cleaning_Fee,
-#          extra_People, 
-#          is_instant_bookable, is_business_ready, minimum_nights, maximum_nights, 
-#          number_of_reviews, review_scores_rating, review_scores_accuracy, 
-#          review_scores_cleanliness, review_scores_checkin, review_scores_communication, 
-#          review_scores_location, review_scores_value, cancellation_is_flexible, 
-#          cancellation_is_moderate, cancellation_is_strict_14, 
-#          cancellation_is_super_strict_30, cancellation_is_super_strict_60)
-# glimpse(x.2)
 
-### Capacity related to price?
-x.3 <- x.2 %>% 
-  filter(accommodates < 11)
+# Price vs location
+lm0 <- lm(review_scores_cleanliness ~ location_is_Near.North_University + location_is_Near.East + location_is_Clintonville + location_is_Near.South +
+                    location_is_West.Olentangy + location_is_North.Linden + location_is_Eastland_Brice + location_is_South.Linden +
+                    location_is_Rocky.Fork_Blacklick + location_is_Downtown + location_is_West.Scioto + location_is_Northeast +
+                    location_is_Hilltop + location_is_Far.West + location_is_Eastmoor_Walnut.Ridge + location_is_Southeast +
+                    location_is_Northland + location_is_Northwest + location_is_Far.Northwest + location_is_Far.East + location_is_Westland +
+                    location_is_Hayden.Run + location_is_Franklinton + location_is_Far.North + location_is_Rickenbacker + location_is_Far.South +
+                    location_is_Greenlawn_Frank.Road, data=x)
+summary(lm0)
+lm0.step <- stepAIC(lm0, direction="both")
+summary(lm0.step)
 
-lm0 <- lm(Price ~ accommodates, data=x.3)
-summary(lm0) # 1 unit increase in capacity = $4 decrease in price
-plot(lm0) # QQ plot shows under-dispersed data
+# Reviews correlation with price?
+lm1 <- lm(Price ~ review_scores_rating + review_scores_accuracy + review_scores_cleanliness + 
+          review_scores_checkin + review_scores_communication + review_scores_location + review_scores_value,
+          data=x)
+summary(lm1)
+lm1.step <- stepAIC(lm1, direction="both")
+summary(lm1.step)
 
-ggplot(data=x.3, aes(x=accommodates, y=Price)) +
-  # geom_point(alpha=.1) +
-  geom_jitter(alpha=.1)+
-  stat_smooth(method="lm", fullrange = TRUE)
+# Interactions between reviews and locations?
 
-### Price vs room type?
-lm1 <- lm(Price ~ room_is_Entire.home + room_is_Private.room + room_is_Shared.room, data=x.2)
-summary(lm1) 
-plot(lm1)
-ggplot(data=x.1, aes(x=room_type,y=Price)) + 
-  # geom_point(alpha=0.1) +
-  # geom_jitter(alpha=.3)+
-  geom_boxplot()
+# reviews vs stuff
+lm2 <- lm(review_scores_rating ~ days.as.host + Price + accommodates + bathrooms + bedrooms + beds, data=x)
+summary(lm2)
+lm2.step <- stepAIC(lm2)
+summary(lm2.step)
 
-### Price vs location?
