@@ -1,0 +1,37 @@
+---
+title: "README"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Columbus AirBnB listing data
+
+We start with extracting the **detailed listing data for Columbus*** via <http://insideairbnb.com/get-the-data.html>.
+
+```{r, echo=FALSE}
+library(tibble)
+x <- read.csv("data/listings_full.csv")
+glimpse(x)
+```
+
+A quick `glimpse` at the data shows a total of 96 variables, not all useful, that we need to sort through.
+
+## Define the goal
+
+Being aan Ohio resident, and an AirBnB'er myself, there are some metrics I'm curious about:
+* Listing price as determined by location
+* Review scores and their distributions
+  + Which review metrics have the widest/narrowist distributions?
+  + Is one review metric more indicative of others?
+  + Are superhosts more likely to receive higher reviews?
+  + Does location play a role in average score?
+* How many reviews does the average superhost have?
+* Average percentage decrease from daily to weekly to monthly between locations
+* How does the capacity of a home, number of beds, and number of baths affect pricing?
+* How long has the average host been registered?
+  + How long has the average superhost been registered?
+

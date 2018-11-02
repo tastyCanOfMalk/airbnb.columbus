@@ -16,6 +16,10 @@ setwd("/home/e/R/airbnb.columbus/")
 # setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
 x <- read.csv("data/listings_full.csv")
+glimpse(x)
+
+
+
 
 x.1 <- x %>% 
   mutate(days.as.host = as.integer(today()-ymd(x$host_since))) %>% 
