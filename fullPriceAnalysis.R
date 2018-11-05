@@ -23,28 +23,32 @@ setwd("C:/Users/e/Documents/R/airbnb.columbus")
 x <- read.csv("data/listings_full.csv")
 glimpse(x)
 
-# First lets see what the distribution of listings per neighborhood is
-count.hoods <- as.data.frame(count(x, neighbourhood_cleansed))
-colnames(count.hoods) <- c("hood","count")
+x <- x %>% 
+  dplyr::select(
+    host_is_superhost, host_listings_count, host_total_listings_count,
+                neighbourhood_cleansed, zipcode, property_type, room_type,
+                accommodates, bathrooms, bedrooms, beds, bed_type, price,
+                weekly_price, monthly_price, security_deposit, cleaning_fee,
+                guests_included, extra_people, minimum_nights, maximum_nights,
+                number_of_reviews, review_scores_rating, review_scores_accuracy,
+                review_scores_cleanliness, review_scores_checkin,
+                review_scores_communication, review_scores_location,
+                review_scores_value, instant_bookable, is_business_travel_ready,
+                cancellation_policy, require_guest_profile_picture,
+                reviews_per_month) %>% 
+  mutate(
+    
+  )
+plot(x$host_listings_count)
+hist(x$host_listings_count)
+glimpse(x)
 
-# filter neighbourhoods with > 20 listings, sort by listing count
-count.hoods <- count.hoods %>%
-  mutate(count=as.numeric(count)) %>% 
-  filter(count > 20)
-count.hoods <- count.hoods[order(-count.hoods[2]),]
+x <- x %>% 
+  dplyr::select(host_listings_count, host_url, price,host_name) %>% 
+  filter(host_listings_count > 100)
+  
 
-ggplot(count.hoods, aes(x=reorder(hood, count), y=count)) +
-  geom_bar(stat="identity") + 
-  ylab("Number of listings") +
-  xlab("Neighborhood") + 
-  ggtitle("Columbus listings > 20 per Neighborhood") +
-  coord_flip()
-
-# we'll now perform a regression predicting price based on neighborhood
-# we need dummy variables for the neighborhoods, using north campus
-# as the base case, since our property is there
-
-x.hoods <- x %>% 
+x <- x %>% 
   group_by(neighbourhood_cleansed) %>% 
   filter(n() > 20) %>% 
   mutate(location_is_Near.South = ifelse(neighbourhood_cleansed == "Near South",1,0)) %>% 
@@ -65,14 +69,6 @@ x.hoods <- x %>%
   mutate(weekly_Price = as.numeric(weekly_price)) %>% 
   mutate(monthly_Price = str_replace(monthly_price, "[$]","")) %>% 
   mutate(monthly_Price = as.numeric(monthly_price))
-
-# x.ho <- x.hoods %>% 
-#   mutate(Price = str_replace(price, "[$]","")) %>% 
-#   mutate(Price = as.numeric(price)) %>% 
-#   filter(neighbourhood_cleansed == "Near North/University")
-#   
-# hist(x.ho$Price)
-# plot(x.ho$Price)
 
 lm0 <- lm(Price~location_is_Near.South+
             location_is_Downtown+
