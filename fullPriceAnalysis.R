@@ -17,36 +17,80 @@ library(MASS)
 library(leaps)
 library(car)
 
-# setwd("/home/e/R/airbnb.columbus/")
-setwd("C:/Users/e/Documents/R/airbnb.columbus")
+setwd("/home/e/R/airbnb.columbus/")
+# setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
 x <- read.csv("data/listings_full.csv")
 glimpse(x)
+# price, weekly_price, monthly_price, security_deposit, cleaning_fee, 
+# extra_people, are all factors rather than integers
 
-x <- x %>% 
-  dplyr::select(
-    host_is_superhost, host_listings_count, host_total_listings_count,
-                neighbourhood_cleansed, zipcode, property_type, room_type,
-                accommodates, bathrooms, bedrooms, beds, bed_type, price,
-                weekly_price, monthly_price, security_deposit, cleaning_fee,
-                guests_included, extra_people, minimum_nights, maximum_nights,
-                number_of_reviews, review_scores_rating, review_scores_accuracy,
-                review_scores_cleanliness, review_scores_checkin,
-                review_scores_communication, review_scores_location,
-                review_scores_value, instant_bookable, is_business_travel_ready,
-                cancellation_policy, require_guest_profile_picture,
-                reviews_per_month) %>% 
-  mutate(
-    
-  )
-plot(x$host_listings_count)
-hist(x$host_listings_count)
-glimpse(x)
+summary(x)
+# host_listings_count and host_total_listings_count are exactly the same
 
-x <- x %>% 
-  dplyr::select(host_listings_count, host_url, price,host_name) %>% 
-  filter(host_listings_count > 100)
+# we have hosts_listings_count with a median of 2.00 and a max of 1308.0
+  # some hosts have dramatically more listings than others
+  # these are likely businesses and we'll filter them out
+  # minimum listings of this group is 93
+  # SoBe and SoBeNY, for example, have listings ranging in location from NY to IL
+  plot(x$host_listings_count)
+  hist(x$host_listings_count) 
+  y <- x%>% 
+    filter(host_listings_count > 25) %>% 
+    dplyr::select(host_name,host_url,host_listings_count)
+  summary(y)
+
+# accomodates, bathrooms, bedrooms, beds also show skewed medians and maximums,
+# filtering for host_listings_count should adjust these
+# high reviews per month probably will also be adjusted
+  # since one bedroom counts as a listing, most airbnb users rent out a single room
+  # there are less and less that list 2 or 3 or more rooms
+  # we'll choose a cutoff of around 10 listings as this represents hosts
+  # that use airbnb for passive income still
+  y <- x %>% 
+    filter(host_listings_count < 10)
+  summary(y)
+  hist(y$host_listings_count)
   
+# some listings are maxed on the have_availability metrics, which means
+# they have zero bookings, investigate and possibly filter out
+  y <- x %>% 
+    filter(availability_90 == 90) %>% 
+    dplyr::select(host_name, host_url, availability_60, availability_90, availability_365)
+  summary(y)
+  # seems that a few of these have max availability because they are priced poorly
+  # or undesirable due to location or other factors
+  # probably keep them in the dataset but remember to filter out when calculating price
+
+# review scores are all very high, oddly.
+  summary(x$review_scores_rating)
+  y <- x %>%
+    filter(review_scores_rating<50)
+  # interestingly the lowest scores are from the company above
+  hist(x$review_scores_rating)
+  # ratings are definitely skewed
+  
+x <- x %>% 
+  # select interesting variables
+  dplyr::select(
+    host_name, host_url, host_is_superhost, host_listings_count, 
+    host_total_listings_count,
+    neighbourhood_cleansed, zipcode, property_type, room_type,
+    accommodates, bathrooms, bedrooms, beds, bed_type, price,
+    weekly_price, monthly_price, security_deposit, cleaning_fee,
+    guests_included, extra_people, minimum_nights, maximum_nights,
+    has_availability, availability_30, availability_60, 
+    availability_90, availability_365, 
+    number_of_reviews, review_scores_rating, review_scores_accuracy,
+    review_scores_cleanliness, review_scores_checkin,
+    review_scores_communication, review_scores_location,
+    review_scores_value, instant_bookable, is_business_travel_ready,
+    cancellation_policy, require_guest_profile_picture,
+    reviews_per_month)
+# before converting everything to dummy variables lets look closer
+# at some of the variables
+
+
 
 x <- x %>% 
   group_by(neighbourhood_cleansed) %>% 
