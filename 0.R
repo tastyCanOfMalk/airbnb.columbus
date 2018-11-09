@@ -75,25 +75,25 @@ x.1 <- x %>%
   mutate(cancellation_is_super_strict_60 = as.integer(ifelse(cancellation_policy == "super_strict_60",1,0)))
 # glimpse(x.1)  
   
-# x.2 <- x.1 %>% 
-#   select(days.as.host, host_is_superhost, host_total_listings_count,
-#          location_is_Near.North_University, location_is_Near.East, location_is_Clintonville, location_is_Near.South,
-#          location_is_West.Olentangy, location_is_North.Linden, location_is_Eastland_Brice, location_is_South.Linden,
-#          location_is_Rocky.Fork_Blacklick, location_is_Downtown, location_is_West.Scioto, location_is_Northeast,
-#          location_is_Hilltop, location_is_Far.West, location_is_Eastmoor_Walnut.Ridge, location_is_Southeast,
-#          location_is_Northland, location_is_Northwest, location_is_Far.Northwest, location_is_Far.East, location_is_Westland,
-#          location_is_Hayden.Run, location_is_Franklinton, location_is_Far.North, location_is_Rickenbacker, location_is_Far.South,
-#          location_is_Greenlawn_Frank.Road, room_is_Entire.home, room_is_Private.room, room_is_Shared.room,
-#          accommodates, bathrooms, bedrooms, beds, 
-#          Price, weekly_Price, monthly_Price, security_Deposit, cleaning_Fee,
-#          extra_People, 
-#          is_instant_bookable, is_business_ready, minimum_nights, maximum_nights, 
-#          number_of_reviews, review_scores_rating, review_scores_accuracy, 
-#          review_scores_cleanliness, review_scores_checkin, review_scores_communication, 
-#          review_scores_location, review_scores_value, cancellation_is_flexible, 
-#          cancellation_is_moderate, cancellation_is_strict_14, 
-#          cancellation_is_super_strict_30, cancellation_is_super_strict_60)
-# glimpse(x.2)
+x.2 <- x.1 %>%
+  select(days.as.host, host_is_superhost, host_total_listings_count,
+         location_is_Near.North_University, location_is_Near.East, location_is_Clintonville, location_is_Near.South,
+         location_is_West.Olentangy, location_is_North.Linden, location_is_Eastland_Brice, location_is_South.Linden,
+         location_is_Rocky.Fork_Blacklick, location_is_Downtown, location_is_West.Scioto, location_is_Northeast,
+         location_is_Hilltop, location_is_Far.West, location_is_Eastmoor_Walnut.Ridge, location_is_Southeast,
+         location_is_Northland, location_is_Northwest, location_is_Far.Northwest, location_is_Far.East, location_is_Westland,
+         location_is_Hayden.Run, location_is_Franklinton, location_is_Far.North, location_is_Rickenbacker, location_is_Far.South,
+         location_is_Greenlawn_Frank.Road, room_is_Entire.home, room_is_Private.room, room_is_Shared.room,
+         accommodates, bathrooms, bedrooms, beds,
+         Price, weekly_Price, monthly_Price, security_Deposit, cleaning_Fee,
+         extra_People,
+         is_instant_bookable, is_business_ready, minimum_nights, maximum_nights,
+         number_of_reviews, review_scores_rating, review_scores_accuracy,
+         review_scores_cleanliness, review_scores_checkin, review_scores_communication,
+         review_scores_location, review_scores_value, cancellation_is_flexible,
+         cancellation_is_moderate, cancellation_is_strict_14,
+         cancellation_is_super_strict_30, cancellation_is_super_strict_60)
+glimpse(x.2)
 
 ### Capacity related to price?
 x.3 <- x.2 %>% 
@@ -101,7 +101,7 @@ x.3 <- x.2 %>%
 
 lm0 <- lm(Price ~ accommodates, data=x.3)
 summary(lm0) # 1 unit increase in capacity = $4 decrease in price
-plot(lm0) # QQ plot shows under-dispersed data
+plot(lm0) # QQ plot shows over-dispersed data
 
 ggplot(data=x.3, aes(x=accommodates, y=Price)) +
   # geom_point(alpha=.1) +

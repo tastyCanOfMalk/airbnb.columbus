@@ -17,8 +17,8 @@ library(MASS)
 library(leaps)
 library(car)
 
-# setwd("/home/e/R/airbnb.columbus/")
-setwd("C:/Users/e/Documents/R/airbnb.columbus")
+setwd("/home/e/R/airbnb.columbus/")
+# setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
 x <- read.csv("data/listings_full.csv")
 glimpse(x)
