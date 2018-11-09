@@ -1,32 +1,28 @@
 if (!require("tidyverse")) install.packages("tidyverse")
-# if (!require("tibble")) install.packages("tibble")
+if (!require("tibble")) install.packages("tibble")
 if (!require("lubridate")) install.packages("lubridate")
 # if (!require("stargazer")) install.packages("stargazer")
 # if (!require("dplyr")) install.packages("dplyr")
-# if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("ggplot2")) install.packages("ggplot2")
 # if (!require("MASS")) install.packages("MASS")
-# if (!require("leaps")) install.packages("leaps")
-# if (!require("car")) install.packages("car")
+if (!require("leaps")) install.packages("leaps")
+if (!require("car")) install.packages("car")
 library(tidyverse)
-# library(tibble)
+library(tibble)
 library(lubridate)
 # library(stargazer)
 # library(dplyr)
-# library(ggplot2)
+library(ggplot2)
 # library(MASS)
-# library(leaps)
-# library(car)
+library(leaps)
+library(car)
 
 setwd("/home/e/R/airbnb.columbus/")
 # setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
 x <- read.csv("data/listings_full.csv")
 glimpse(x)
-# price, weekly_price, monthly_price, security_deposit, cleaning_fee, 
-# extra_people, are all factors rather than integers
-
 summary(x)
-# host_listings_count and host_total_listings_count are exactly the same
 
 # we have hosts_listings_count with a median of 2.00 and a max of 1308.0
   # some hosts have dramatically more listings than others
@@ -35,7 +31,7 @@ summary(x)
   # SoBe and SoBeNY, for example, have listings ranging in location from NY to IL
   plot(x$host_listings_count)
   hist(x$host_listings_count) 
-  y <- x%>% 
+  y <- x %>% 
     filter(host_listings_count > 25) %>% 
     dplyr::select(host_name,host_url,listing_url,host_listings_count)
   summary(y)
@@ -69,30 +65,6 @@ summary(x)
   # interestingly the lowest scores are from the company above
   hist(x$review_scores_rating)
   # ratings are definitely skewed
-  
-x <- x %>% 
-  # select interesting variables
-  dplyr::select(
-    listing_url, host_url, host_name, 
-    host_since, host_is_superhost, host_listings_count, latitude, longitude, 
-    is_location_exact, zipcode, 
-    
-    neighbourhood_cleansed,
-    room_type,
-    
-    accommodates, bathrooms, bedrooms, beds, 
-    
-    price, weekly_price, monthly_price, security_deposit, cleaning_fee,
-    guests_included, extra_people, minimum_nights, maximum_nights,
-    
-    has_availability, availability_30, availability_60, 
-    availability_90, availability_365, 
-    number_of_reviews, review_scores_rating, review_scores_accuracy,
-    review_scores_cleanliness, review_scores_checkin,
-    review_scores_communication, review_scores_location,
-    review_scores_value, instant_bookable, is_business_travel_ready,
-    cancellation_policy, reviews_per_month)
-glimpse(x)
 
 
 y <- x %>% 
@@ -195,6 +167,34 @@ y <- x %>%
     cancellation.is.super_strict_30,
     cancellation.is.super_strict_60, 
     reviews_per_month
-    )
-
+    ) %>% 
 summary(y)
+
+# first let's do a lm with all variables, predicting price
+lm.all <- lm(Price ~ days_as_host+ host_is_superhost+ host_listings_count+
+  loc.is.Near.North_University+ loc.is.Near.East+ loc.is.Clintonville + loc.is.Near.South+
+  loc.is.West.Olentangy+ loc.is.North.Linden+ loc.is.Eastland_Brice+ loc.is.South.Linden+
+  loc.is.Rocky.Fork_Blacklick+ loc.is.Downtown+ loc.is.West.Scioto+ loc.is.Northeast+
+  loc.is.Hilltop+ loc.is.Far.West+ loc.is.Eastmoor_Walnut.Ridge+ loc.is.Southeast+
+  loc.is.Northland+ loc.is.Northwest+ loc.is.Far.Northwest+ loc.is.Far.East+
+  loc.is.Westland+ loc.is.Hayden.Run+ loc.is.Franklinton+ loc.is.Far.North+
+  loc.is.Rickenbacker+ loc.is.Far.South+ loc.is.Greenlawn_Frank.Road+
+  room.is.Shared.room+ room.is.Private.room+ room.is.Entire.home+
+  accommodates+ bathrooms+ bedrooms+ beds+ 
+  weekly_Price+ monthly_Price+ security_Deposit+ cleaning_Fee+
+  guests_included+ extra_People+ minimum_nights+ maximum_nights+
+  has_availability+ availability_30+ availability_60+ 
+  availability_90+ availability_365+ 
+  number_of_reviews+ review_scores_rating+ review_scores_accuracy+
+  review_scores_cleanliness+ review_scores_checkin+
+  review_scores_communication+ review_scores_location+
+  review_scores_value+ instant_bookable+ is_business_travel_ready+
+  cancellation.is.flexible+
+  cancellation.is.moderate+
+  cancellation.is.strict_14+
+  cancellation.is.super_strict_30+
+  cancellation.is.super_strict_60+ 
+  reviews_per_month, data=y)
+lm.allsummary(lm.all)
+anova(lm.all)
+vif(lm.all)
