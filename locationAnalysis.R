@@ -17,21 +17,85 @@ library(MASS)
 library(leaps)
 library(car)
 
+## GOAL is analysis of listing price based on location of the listing
+# we'll try filtering out businesses with many listings (maybe not though),
+# and definitely filter out based on availability ( if a listing is available 365days
+# out of the year, then nobody is buying and it represents in incorrect price data point)
+
 setwd("/home/e/R/airbnb.columbus/")
 # setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
+# Let's convert some numbers to integers for quick analysis, and remove 
+# some of the junkier useless variables
 x <- read.csv("data/listings_full.csv")
 glimpse(x)
+y <- x %>%
+  mutate(days_as_host = as.integer(today()-ymd(x$host_since))) %>% 
+  mutate(host_is_superhost = as.integer(ifelse(host_is_superhost == "t",1,0))) %>% 
+  mutate(is_location_exact = as.integer(ifelse(is_location_exact == "t",1,0))) %>% 
+  mutate(Price = str_replace(price, "[$]","")) %>% 
+  mutate(Price = as.integer(price)) %>%   
+  mutate(weekly_Price = str_replace(weekly_price, "[$]","")) %>% 
+  mutate(weekly_Price = as.integer( weekly_price)) %>%   
+  mutate(monthly_Price = str_replace(monthly_price, "[$]","")) %>% 
+  mutate(monthly_Price = as.integer( monthly_price)) %>%   
+  mutate(security_Deposit = str_replace(security_deposit, "[$]","")) %>% 
+  mutate(security_Deposit = as.integer( security_deposit)) %>%   
+  mutate(cleaning_Fee = str_replace(cleaning_fee, "[$]","")) %>% 
+  mutate(cleaning_Fee = as.integer( cleaning_fee)) %>%   
+  mutate(extra_People = str_replace(extra_people, "[$]","")) %>% 
+  mutate(extra_People = as.integer( extra_people)) %>%   
+  mutate(has_availability = as.integer(ifelse(has_availability == "t",1,0))) %>% 
+  mutate(instant_bookable = as.integer(ifelse(instant_bookable == "t",1,0))) %>% 
+  mutate(is_business_travel_ready = as.integer(ifelse(is_business_travel_ready == "t",1,0))) %>% 
+  dplyr::select (-c(id,scrape_id,last_scraped,name,summary,space,description,experiences_offered,
+         neighborhood_overview,notes,transit,access,interaction,house_rules,thumbnail_url,
+         medium_url,picture_url,xl_picture_url,host_id,host_about,host_acceptance_rate,
+         host_thumbnail_url,host_picture_url,host_since,
+         price,weekly_price,monthly_price,security_deposit,extra_people,cleaning_fee,
+         host_neighbourhood,host_total_listings_count,host_verifications,host_has_profile_pic,
+         host_identity_verified,street,neighbourhood,neighbourhood_group_cleansed, city,
+         state,market,smart_location,country_code,country,property_type,bed_type,amenities,
+         square_feet,calendar_updated,calendar_last_scraped,requires_license,license,
+         jurisdiction_names))
+
+# Checking the summary stats we can see there are a lot of hosts with 
+# "NA" reviews, what's up with that?
+summary(y)
+y.na.reviews <- y[is.na(y$review_scores_rating),] # select NA reviews
+summary(y.na.reviews$review_scores_rating)
+summary(y.na.reviews)
+  # We see roughly half of the NA review listings are held by the 3 businesses:
+  # Stay Alfred, SoBeNY, and SoBe, and a few other entrepreneurials
+  # We should filter those without reviews, as the listing Price will likely be inaccurate
+
+par(mfrow=c(1,3))
+hist(y.na.reviews$host_listings_count,main=paste("Listings count for NA reviews"))
+hist(y$host_listings_count,main=paste("Listings count for NA+non-NA reviews"))
+y1 <- y %>%
+  filter(review_scores_rating != "NA")
+hist(y1$host_listings_count,main=paste("Listings count for non-NA reviews"))
+
+y2 <- y1 %>% 
+  filter(host_is_superhost == 1)
+
+hist(y2$host_listings_count)
+
+# might want to filter for everyone but superhosts?
+
+
+
+
 
 # First lets see what the distribution of listings per neighborhood is
-count.hoods <- as.data.frame(count(x, neighbourhood_cleansed))
+count.hoods <- as.data.frame(count(y, neighbourhood_cleansed))
+count.hoods <- count.hoods[order(-count.hoods[2]),]
 colnames(count.hoods) <- c("hood","count")
 
 # filter neighbourhoods with > 20 listings, sort by listing count
 count.hoods <- count.hoods %>%
   mutate(count=as.numeric(count)) %>% 
   filter(count > 20)
-count.hoods <- count.hoods[order(-count.hoods[2]),]
 
 ggplot(count.hoods, aes(x=reorder(hood, count), y=count)) +
   geom_bar(stat="identity") + 
@@ -45,6 +109,7 @@ ggplot(count.hoods, aes(x=reorder(hood, count), y=count)) +
 # as the base case, since our property is there
 
 x.hoods <- x %>% 
+  select(-host_id,-host_url,-host
   group_by(neighbourhood_cleansed) %>% 
   filter(n() > 20) %>% 
   mutate(location_is_Near.South = ifelse(neighbourhood_cleansed == "Near South",1,0)) %>% 
@@ -66,6 +131,8 @@ x.hoods <- x %>%
   mutate(monthly_Price = str_replace(monthly_price, "[$]","")) %>% 
   mutate(monthly_Price = as.numeric(monthly_price))
 
+
+
 # x.ho <- x.hoods %>% 
 #   mutate(Price = str_replace(price, "[$]","")) %>% 
 #   mutate(Price = as.numeric(price)) %>% 
@@ -74,7 +141,8 @@ x.hoods <- x %>%
 # hist(x.ho$Price)
 # plot(x.ho$Price)
 
-lm0 <- lm(Price~location_is_Near.South+
+lm0 <- lm(Price ~ 
+            location_is_Near.South+
             location_is_Downtown+
             location_is_Near.East+
             location_is_Clintonville+
