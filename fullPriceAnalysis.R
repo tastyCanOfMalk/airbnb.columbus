@@ -29,6 +29,7 @@ summary(x)
   # these are likely businesses and we'll filter them out
   # minimum listings of this group is 93
   # SoBe and SoBeNY, for example, have listings ranging in location from NY to IL
+  # However, this won't necessarily screw with our data of price prediction, will it?
   plot(x$host_listings_count)
   hist(x$host_listings_count) 
   y <- x %>% 
@@ -66,22 +67,22 @@ summary(x)
   hist(x$review_scores_rating)
   # ratings are definitely skewed
 
-
+# Let's gather all the data, converting to integers and dummy variables when necessary
 y <- x %>% 
   mutate(days_as_host = as.integer(today()-ymd(x$host_since))) %>% 
   mutate(host_is_superhost = as.integer(ifelse(host_is_superhost == "t",1,0))) %>% 
   mutate(is_location_exact = as.integer(ifelse(is_location_exact == "t",1,0))) %>% 
-  mutate(Price = str_replace(price, "[$]","")) %>% 
+  mutate(price = str_replace(price, "[$]","")) %>% 
   mutate(Price = as.integer(price)) %>%   
-  mutate(weekly_Price = str_replace(weekly_price, "[$]","")) %>% 
+  mutate(weekly_price = str_replace(weekly_price, "[$]","")) %>% 
   mutate(weekly_Price = as.integer( weekly_price)) %>%   
-  mutate(monthly_Price = str_replace(monthly_price, "[$]","")) %>% 
+  mutate(monthly_price = str_replace(monthly_price, "[$]","")) %>% 
   mutate(monthly_Price = as.integer( monthly_price)) %>%   
-  mutate(security_Deposit = str_replace(security_deposit, "[$]","")) %>% 
+  mutate(security_deposit = str_replace(security_deposit, "[$]","")) %>% 
   mutate(security_Deposit = as.integer( security_deposit)) %>%   
-  mutate(cleaning_Fee = str_replace(cleaning_fee, "[$]","")) %>% 
+  mutate(cleaning_fee = str_replace(cleaning_fee, "[$]","")) %>% 
   mutate(cleaning_Fee = as.integer( cleaning_fee)) %>%   
-  mutate(extra_People = str_replace(extra_people, "[$]","")) %>% 
+  mutate(extra_people = str_replace(extra_people, "[$]","")) %>% 
   mutate(extra_People = as.integer( extra_people)) %>%   
   mutate(has_availability = as.integer(ifelse(has_availability == "t",1,0))) %>% 
   mutate(instant_bookable = as.integer(ifelse(instant_bookable == "t",1,0))) %>% 
@@ -120,55 +121,60 @@ y <- x %>%
   mutate(cancellation.is.moderate = as.integer(ifelse(cancellation_policy == "moderate",1,0))) %>% 
   mutate(cancellation.is.strict_14 = as.integer(ifelse(cancellation_policy == "strict_14_with_grace_period",1,0))) %>% 
   mutate(cancellation.is.super_strict_30 = as.integer(ifelse(cancellation_policy == "super_strict_30",1,0))) %>% 
-  mutate(cancellation.is.super_strict_60 = as.integer(ifelse(cancellation_policy == "super_strict_60",1,0))) %>% 
-  select(
-    listing_url, host_url, host_name, days_as_host, host_is_superhost, 
-    host_listings_count, latitude, longitude, is_location_exact, zipcode, 
-    loc.is.Near.North_University,
-    loc.is.Near.East,
-    loc.is.Clintonville ,
-    loc.is.Near.South,
-    loc.is.West.Olentangy,
-    loc.is.North.Linden,
-    loc.is.Eastland_Brice,
-    loc.is.South.Linden,
-    loc.is.Rocky.Fork_Blacklick,
-    loc.is.Downtown,
-    loc.is.West.Scioto,
-    loc.is.Northeast,
-    loc.is.Hilltop ,
-    loc.is.Far.West,
-    loc.is.Eastmoor_Walnut.Ridge,
-    loc.is.Southeast,
-    loc.is.Northland,
-    loc.is.Northwest,
-    loc.is.Far.Northwest,
-    loc.is.Far.East,
-    loc.is.Westland,
-    loc.is.Hayden.Run,
-    loc.is.Franklinton,
-    loc.is.Far.North,
-    loc.is.Rickenbacker,
-    loc.is.Far.South,
-    loc.is.Greenlawn_Frank.Road,
-    room.is.Shared.room, room.is.Private.room, room.is.Entire.home,
-    accommodates, bathrooms, bedrooms, beds, 
-    Price, weekly_Price, monthly_Price, security_Deposit, cleaning_Fee,
-    guests_included, extra_People, minimum_nights, maximum_nights,
-    has_availability, availability_30, availability_60, 
-    availability_90, availability_365, 
-    number_of_reviews, review_scores_rating, review_scores_accuracy,
-    review_scores_cleanliness, review_scores_checkin,
-    review_scores_communication, review_scores_location,
-    review_scores_value, instant_bookable, is_business_travel_ready,
-    cancellation.is.flexible,
-    cancellation.is.moderate,
-    cancellation.is.strict_14,
-    cancellation.is.super_strict_30,
-    cancellation.is.super_strict_60, 
-    reviews_per_month
-    ) %>% 
+  mutate(cancellation.is.super_strict_60 = as.integer(ifelse(cancellation_policy == "super_strict_60",1,0))) 
+  # select(
+  #   listing_url, host_url, host_name, days_as_host, host_is_superhost, 
+  #   host_listings_count, latitude, longitude, is_location_exact, zipcode, 
+  #   loc.is.Near.North_University,
+  #   loc.is.Near.East,
+  #   loc.is.Clintonville ,
+  #   loc.is.Near.South,
+  #   loc.is.West.Olentangy,
+  #   loc.is.North.Linden,
+  #   loc.is.Eastland_Brice,
+  #   loc.is.South.Linden,
+  #   loc.is.Rocky.Fork_Blacklick,
+  #   loc.is.Downtown,
+  #   loc.is.West.Scioto,
+  #   loc.is.Northeast,
+  #   loc.is.Hilltop ,
+  #   loc.is.Far.West,
+  #   loc.is.Eastmoor_Walnut.Ridge,
+  #   loc.is.Southeast,
+  #   loc.is.Northland,
+  #   loc.is.Northwest,
+  #   loc.is.Far.Northwest,
+  #   loc.is.Far.East,
+  #   loc.is.Westland,
+  #   loc.is.Hayden.Run,
+  #   loc.is.Franklinton,
+  #   loc.is.Far.North,
+  #   loc.is.Rickenbacker,
+  #   loc.is.Far.South,
+  #   loc.is.Greenlawn_Frank.Road,
+  #   room.is.Shared.room, room.is.Private.room, room.is.Entire.home,
+  #   accommodates, bathrooms, bedrooms, beds, 
+  #   Price, weekly_Price, monthly_Price, security_Deposit, cleaning_Fee,
+  #   guests_included, extra_People, minimum_nights, maximum_nights,
+  #   has_availability, availability_30, availability_60, 
+  #   availability_90, availability_365, 
+  #   number_of_reviews, review_scores_rating, review_scores_accuracy,
+  #   review_scores_cleanliness, review_scores_checkin,
+  #   review_scores_communication, review_scores_location,
+  #   review_scores_value, instant_bookable, is_business_travel_ready,
+  #   cancellation.is.flexible,
+  #   cancellation.is.moderate,
+  #   cancellation.is.strict_14,
+  #   cancellation.is.super_strict_30,
+  #   cancellation.is.super_strict_60, 
+  #   reviews_per_month
+  #   )
 summary(y)
+glimpse(y)
+
+y$cleaning_Fee[is.na(y$cleaning_Fee)]<-0
+y$security_Deposit[is.na(y$security_Deposit)]<-0
+
 
 # first let's do a lm with all variables, predicting price
 lm.all <- lm(Price ~ days_as_host+ host_is_superhost+ host_listings_count+
@@ -195,6 +201,6 @@ lm.all <- lm(Price ~ days_as_host+ host_is_superhost+ host_listings_count+
   cancellation.is.super_strict_30+
   cancellation.is.super_strict_60+ 
   reviews_per_month, data=y)
-lm.allsummary(lm.all)
+summary(lm.all)
 anova(lm.all)
 vif(lm.all)
