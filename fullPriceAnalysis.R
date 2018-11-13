@@ -17,12 +17,12 @@ library(ggplot2)
 library(leaps)
 library(car)
 
-setwd("/home/e/R/airbnb.columbus/")
-# setwd("C:/Users/e/Documents/R/airbnb.columbus")
+# setwd("/home/e/R/airbnb.columbus/")
+setwd("C:/Users/e/Documents/R/airbnb.columbus")
 
 x <- read.csv("data/listings_full.csv")
-glimpse(x)
-summary(x)
+# glimpse(x)
+# summary(x)
 
 # we have hosts_listings_count with a median of 2.00 and a max of 1308.0
   # some hosts have dramatically more listings than others
@@ -68,7 +68,7 @@ summary(x)
   # ratings are definitely skewed
 
 # Let's gather all the data, converting to integers and dummy variables when necessary
-y <- x %>% 
+x <- x %>% 
   mutate(days_as_host = as.integer(today()-ymd(x$host_since))) %>% 
   mutate(host_is_superhost = as.integer(ifelse(host_is_superhost == "t",1,0))) %>% 
   mutate(is_location_exact = as.integer(ifelse(is_location_exact == "t",1,0))) %>% 
@@ -121,59 +121,93 @@ y <- x %>%
   mutate(cancellation.is.moderate = as.integer(ifelse(cancellation_policy == "moderate",1,0))) %>% 
   mutate(cancellation.is.strict_14 = as.integer(ifelse(cancellation_policy == "strict_14_with_grace_period",1,0))) %>% 
   mutate(cancellation.is.super_strict_30 = as.integer(ifelse(cancellation_policy == "super_strict_30",1,0))) %>% 
-  mutate(cancellation.is.super_strict_60 = as.integer(ifelse(cancellation_policy == "super_strict_60",1,0))) 
-  # select(
-  #   listing_url, host_url, host_name, days_as_host, host_is_superhost, 
-  #   host_listings_count, latitude, longitude, is_location_exact, zipcode, 
-  #   loc.is.Near.North_University,
-  #   loc.is.Near.East,
-  #   loc.is.Clintonville ,
-  #   loc.is.Near.South,
-  #   loc.is.West.Olentangy,
-  #   loc.is.North.Linden,
-  #   loc.is.Eastland_Brice,
-  #   loc.is.South.Linden,
-  #   loc.is.Rocky.Fork_Blacklick,
-  #   loc.is.Downtown,
-  #   loc.is.West.Scioto,
-  #   loc.is.Northeast,
-  #   loc.is.Hilltop ,
-  #   loc.is.Far.West,
-  #   loc.is.Eastmoor_Walnut.Ridge,
-  #   loc.is.Southeast,
-  #   loc.is.Northland,
-  #   loc.is.Northwest,
-  #   loc.is.Far.Northwest,
-  #   loc.is.Far.East,
-  #   loc.is.Westland,
-  #   loc.is.Hayden.Run,
-  #   loc.is.Franklinton,
-  #   loc.is.Far.North,
-  #   loc.is.Rickenbacker,
-  #   loc.is.Far.South,
-  #   loc.is.Greenlawn_Frank.Road,
-  #   room.is.Shared.room, room.is.Private.room, room.is.Entire.home,
-  #   accommodates, bathrooms, bedrooms, beds, 
-  #   Price, weekly_Price, monthly_Price, security_Deposit, cleaning_Fee,
-  #   guests_included, extra_People, minimum_nights, maximum_nights,
-  #   has_availability, availability_30, availability_60, 
-  #   availability_90, availability_365, 
-  #   number_of_reviews, review_scores_rating, review_scores_accuracy,
-  #   review_scores_cleanliness, review_scores_checkin,
-  #   review_scores_communication, review_scores_location,
-  #   review_scores_value, instant_bookable, is_business_travel_ready,
-  #   cancellation.is.flexible,
-  #   cancellation.is.moderate,
-  #   cancellation.is.strict_14,
-  #   cancellation.is.super_strict_30,
-  #   cancellation.is.super_strict_60, 
-  #   reviews_per_month
-  #   )
-summary(y)
-glimpse(y)
+  mutate(cancellation.is.super_strict_60 = as.integer(ifelse(cancellation_policy == "super_strict_60",1,0)))
 
-y$cleaning_Fee[is.na(y$cleaning_Fee)]<-0
-y$security_Deposit[is.na(y$security_Deposit)]<-0
+# Replace NA's with 0
+x$extra_People[is.na(y$extra_People)] <- 0
+x$cleaning_Fee[is.na(y$cleaning_Fee)] <- 0
+x$security_Deposit[is.na(y$security_Deposit)] <- 0
+
+# Extrapolate daily price to weekly/monthly when necessary
+for(k in 1:length(x$monthly_Price)){
+  if(is.na(x$weekly_Price[[k]])){
+    x$weekly_Price[[k]] = x$Price[[k]]*7
+  }  
+  if(is.na(x$monthly_Price[[k]])){
+    x$monthly_Price[[k]] = x$Price[[k]]*30
+  }  
+}
+
+y <- x %>% 
+  dplyr::select(listing_url, days_as_host, host_is_superhost, host_listings_count, accommodates,
+         bathrooms, bedrooms, beds, Price, weekly_Price, monthly_Price, security_Deposit,
+         cleaning_Fee, guests_included, extra_People, minimum_nights, maximum_nights,
+         availability_30, availability_60, availability_90, availability_365,
+         number_of_reviews, review_scores_rating, review_scores_accuracy,
+         review_scores_cleanliness, review_scores_checkin, review_scores_communication,
+         review_scores_location, review_scores_value, instant_bookable, 
+         reviews_per_month, 
+         loc.is.Near.North_University, loc.is.Near.East, loc.is.Clintonville, 
+         loc.is.Near.South, loc.is.West.Olentangy, loc.is.North.Linden, 
+         loc.is.Eastland_Brice, loc.is.South.Linden, loc.is.Rocky.Fork_Blacklick, 
+         loc.is.Downtown, loc.is.West.Scioto, loc.is.Northeast, 
+         loc.is.Hilltop, loc.is.Far.West, loc.is.Eastmoor_Walnut.Ridge, 
+         loc.is.Southeast, loc.is.Northland, loc.is.Northwest, 
+         loc.is.Far.Northwest, loc.is.Far.East, loc.is.Westland, 
+         loc.is.Hayden.Run, loc.is.Franklinton, loc.is.Far.North, 
+         loc.is.Rickenbacker, loc.is.Far.South, loc.is.Greenlawn_Frank.Road, 
+         room.is.Entire.home, room.is.Private.room, room.is.Shared.room, 
+         cancellation.is.flexible, cancellation.is.moderate, cancellation.is.strict_14, 
+         cancellation.is.super_strict_30, cancellation.is.super_strict_60,
+         bed_type)
+y <- x %>% 
+  dplyr::select(days_as_host, host_is_superhost, host_listings_count, accommodates,
+         bathrooms, bedrooms, beds, Price, weekly_Price, monthly_Price, security_Deposit,
+         cleaning_Fee, guests_included, extra_People, minimum_nights, maximum_nights,
+         availability_30, availability_60, availability_90, availability_365,
+         number_of_reviews, review_scores_rating, review_scores_accuracy,
+         review_scores_cleanliness, review_scores_checkin, review_scores_communication,
+         review_scores_location, review_scores_value, instant_bookable, 
+         reviews_per_month, neighbourhood_cleansed, cancellation_policy, bed_type)
+
+# scan variables that seem off or odd
+glimpse(x)
+summary(y)
+# host_listings_count: very right skewed due to some businesses owning many properties
+# not an issue as long as prices are representative
+  hist(y$host_listings_count) 
+# taking a look at monthly_Price, however, shows some impressive outliers   
+  hist(y$monthly_Price) 
+  ggplot(y,aes(monthly_Price))+geom_histogram()
+  summary(y$monthly_Price)
+  # let's investigate
+  which(y$monthly_Price>20000)
+  # there are somehow quite a few listings priced at > 20k per month
+  y[999,]$listing_url
+  y[909,]$listing_url
+  # both of these listings have zero reviews and are absolutely not representative
+  # to avoid these odd listings lets filter 
+  # we want to draw conclusions about how much a room costs, we don't want to include
+  # rooms which have never been rented or have only been rented a few times
+  
+y %>% 
+  filter(number_of_reviews > 11) %>% 
+  ggplot(aes(x=log(monthly_Price))) + 
+  geom_histogram() + 
+  ggtitle("reviews > 11 vs log(monthly_Price histogram)")
+
+y <- y %>% 
+  dplyr::select(c(-listing_url)) %>% 
+  filter(number_of_reviews > 11)
+
+lm.all <- lm(logPrice ~., data=y)
+summary(lm.all)
+# multicollinearity with Price variables
+# rather than create dummy vars first, let R find the important ones then make
+
+
+
+
 
 
 # first let's do a lm with all variables, predicting price

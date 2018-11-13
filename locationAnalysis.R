@@ -17,6 +17,9 @@ library(MASS)
 library(leaps)
 library(car)
 
+library(Hmisc)
+Hmisc::describe(x) #use after removing reviews etc
+
 ## GOAL is analysis of listing price based on location of the listing
 # we'll try filtering out businesses with many listings (maybe not though),
 # and definitely filter out based on availability ( if a listing is available 365days
